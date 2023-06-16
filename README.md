@@ -5,7 +5,7 @@
 /___/\__/\_,_/\__/\__/   /_/ /_/  \___/\___/ .__/\__/_/   
                                           /_/              
 ```
-*Finite State Machine for Go*
+*Tiny, no frills finite state machine for Go*
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
@@ -16,7 +16,7 @@
 StateTrooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
 
 ## Features
-- Generic support for different state types
+- Generic support for different comparable types
 - Transition error handling
 - Transition history
 - Thread safe
@@ -79,13 +79,6 @@ go get github.com/hishamk/statetrooper
 Here's an example usage with a custom entity struct and state enum:
 
 ```go
-package main
-
-import (
-	"fmt"
-	"github.com/hishamk/statetrooper"
-)
-
 // CustomStateEnum represents the state enum for the custom entity
 type CustomStateEnum int
 
@@ -95,18 +88,6 @@ const (
 	CustomStateEnumB
 	CustomStateEnumC
 )
-
-/* Note that states can be defined using any comparable type, such as strings, e.g.:
-
-type CustomStateEnum string
-
-const (
-	CustomStateEnumA CustomStateEnum = "Created"
-	CustomStateEnumB CustomStateEnum = "Packed"
-	CustomStateEnumC CustomStateEnum = "Shipped"
-)
-
-*/
 
 // CustomEntity represents a custom entity with its current state
 type CustomEntity struct {
@@ -132,6 +113,18 @@ func main() {
 	}
 }
 ```
+
+Note that states can be defined using any comparable type, such as strings, e.g.:
+```
+type CustomStateEnum string
+
+const (
+	CustomStateEnumA CustomStateEnum = "Created"
+	CustomStateEnumB CustomStateEnum = "Packed"
+	CustomStateEnumC CustomStateEnum = "Shipped"
+)
+```
+
 
 ## License
 This package is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
