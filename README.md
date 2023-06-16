@@ -73,6 +73,42 @@ go get github.com/hishamk/statetrooper
 Here's an example usage with a custom entity struct and state enum:
 
 ```go
+type OrderStatusEnum string
+
+// Enum values for the custom entity
+const (
+	StatusPacked    OrderStatusEnum = "packed"
+	StatusShipped   OrderStatusEnum = "shipped"
+	StatusDelivered OrderStatusEnum = "delivered"
+)
+
+// Order represents a custom entity with its current state
+type Order struct {
+	State *statetrooper.FSM[OrderStatusEnum]
+}
+
+func main() {
+	entity := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusPacked)}
+	entity.State.AddRule(StatusPacked, StatusShipped)
+	entity.State.AddRule(StatusShipped, StatusDelivered)
+
+	// Check if a transition is valid
+	canTransition := entity.State.CanTransition(StatusShipped)
+	fmt.Printf("Can transition to %s: %t\n", StatusShipped, canTransition)
+
+	// Transition to a new state
+	_, err := entity.State.Transition(StatusShipped, "Mahmoud")
+
+	if err != nil {
+		fmt.Println("Transition error:", err)
+	} else {
+		fmt.Println("Transition successful. Current state:", *entity.State.CurrentState)
+	}
+}
+```
+
+Note that states can be defined using any comparable type, such as strings, int, etc e.g.:
+```go
 // CustomStateEnum represents the state enum for the custom entity
 type CustomStateEnum int
 
@@ -83,40 +119,6 @@ const (
 	CustomStateEnumC
 )
 
-// CustomEntity represents a custom entity with its current state
-type CustomEntity struct {
-	State *CustomStateEnum
-}
-
-func main() {
-	entity := &CustomEntity{State: new(CustomStateEnum)}
-	fsm := statetrooper.NewFSM[CustomStateEnum](CustomStateEnumA)
-	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
-	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
-
-	// Check if a transition is valid
-	canTransition := fsm.CanTransition(CustomStateEnumB)
-	fmt.Println("Can transition to B:", canTransition)
-
-	// Transition to a new state
-	entity.State, err := fsm.Transition(CustomStateEnumB)
-	if err != nil {
-		fmt.Println("Transition error:", err)
-	} else {
-		fmt.Println("Transition successful. Current state:", entity.State)
-	}
-}
-```
-
-Note that states can be defined using any comparable type, such as strings, e.g.:
-```
-type CustomStateEnum string
-
-const (
-	CustomStateEnumA CustomStateEnum = "Created"
-	CustomStateEnumB CustomStateEnum = "Packed"
-	CustomStateEnumC CustomStateEnum = "Shipped"
-)
 ```
 
 
