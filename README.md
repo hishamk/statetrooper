@@ -9,7 +9,7 @@
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 [![Go report card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
-[![Test coverage](http://gocover.io/_badge/github.com/hishamk/statetrooper)](https://gocover.io/github.com/hishamk/statetrooper)
+[![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://raw.githack.com/wiki/hishamk/statetrooper/coverage.html)
 
 
 
@@ -17,7 +17,6 @@ StateTrooper is a Go package that provides a finite state machine (FSM) for mana
 
 ## Features
 - Generic support for different state types
-- Ability to define valid state transitions
 - Transition error handling
 - Transition history
 - Thread safe
