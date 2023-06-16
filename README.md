@@ -9,7 +9,7 @@
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 [![Go report card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
-[![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://raw.githack.com/wiki/hishamk/statetrooper/coverage.html)
+[![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://github.com/hishamk/statetrooper/wiki/coverage.html)
 
 
 
