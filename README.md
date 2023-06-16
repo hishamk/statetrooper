@@ -62,12 +62,6 @@ go get github.com/hishamk/statetrooper
        // Handle the error
    }
    ```
-   :
-
-   ```go
-   fsm.Transitions
-   ```
-
 
 ## Benchmark
 | Benchmark                | Iterations | Time per Iteration | Memory Allocation per Iteration | Allocations per Iteration |
