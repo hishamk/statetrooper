@@ -7,7 +7,7 @@
 ```
 *Finite State Machine for Go*
 
-[![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper/v2?tab=doc)
+[![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 [![Go report card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
 [![Test coverage](http://gocover.io/_badge/github.com/hishamk/statetrooper)](https://gocover.io/github.com/hishamk/statetrooper)
 
