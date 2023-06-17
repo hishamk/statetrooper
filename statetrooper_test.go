@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 )
@@ -194,6 +195,31 @@ func Test_transitionTracking(t *testing.T) {
 			t.Errorf("Transition tracker has incorrect Metadata. Got %v, expected %v", tracker.Metadata, expected.Metadata)
 		}
 	}
+}
+
+func Test_concurrency(t *testing.T) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
+
+	var wg sync.WaitGroup
+
+	numGoroutines := 100
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for j := 0; j < 1000; j++ {
+				fsm.Transition(CustomStateEnumB, nil)
+				fsm.Transition(CustomStateEnumC, nil)
+			}
+		}()
+	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
 }
 
 func Test_jsonMarshal(t *testing.T) {

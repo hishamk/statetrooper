@@ -59,14 +59,14 @@ func NewFSM[T comparable](initialState T) *FSM[T] {
 
 // CanTransition checks if a transition from the current state to the target state is valid
 func (fsm *FSM[T]) CanTransition(targetState T) bool {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
 	return fsm.canTransition(*fsm.CurrentState, targetState)
 }
 
 // canTransition checks if a transition from one state to another state is valid
 func (fsm *FSM[T]) canTransition(fromState T, toState T) bool {
-	fsm.mu.Lock()
-	defer fsm.mu.Unlock()
-
 	validTransitions, ok := fsm.ruleset[fromState]
 	if !ok {
 		return false
@@ -91,15 +91,15 @@ func (fsm *FSM[T]) AddRule(fromState T, toState T) {
 
 // Transition transitions the entity from the current state to the target state
 func (fsm *FSM[T]) Transition(targetState T, metadata map[string]string) (*T, error) {
-	if !fsm.CanTransition(targetState) {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	if !fsm.canTransition(*fsm.CurrentState, targetState) {
 		return nil, TransitionError[T]{
 			FromState: *fsm.CurrentState,
 			ToState:   targetState,
 		}
 	}
-
-	fsm.mu.Lock()
-	defer fsm.mu.Unlock()
 
 	// Track the transition
 	tn := time.Now()

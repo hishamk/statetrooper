@@ -1,27 +1,29 @@
 ```
-   ______       __        ______                          
+   ______       __        ______
   / __/ /____ _/ /____   /_  __/______  ___  ___  ___ ____
  _\ \/ __/ _ `/ __/ -_)   / / / __/ _ \/ _ \/ _ \/ -_) __/
-/___/\__/\_,_/\__/\__/   /_/ /_/  \___/\___/ .__/\__/_/   
-                                          /_/              
+/___/\__/\_,_/\__/\__/   /_/ /_/  \___/\___/ .__/\__/_/
+                                          /_/
 ```
-*Tiny, no frills finite state machine for Go*
+
+_Tiny, no frills finite state machine for Go_
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 [![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://raw.githack.com/wiki/hishamk/statetrooper/coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
 [![MIT](https://img.shields.io/github/license/hishamk/statetrooper)](https://img.shields.io/github/license/hishamk/statetrooper) ![Code size](https://img.shields.io/github/languages/code-size/hishamk/statetrooper)
 
-
 StateTrooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
 
 ## Features
+
 - Generic support for different comparable types
 - Transition history with metadata
 - Thread safe
 - Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
 
 ## Installation
+
 To install StateTrooper, use the following command:
 
 ```shell
@@ -29,58 +31,60 @@ go get github.com/hishamk/statetrooper
 ```
 
 ## Usage
-   Import the `statetrooper` package into your Go code:
 
-   ```go
-   import "github.com/hishamk/statetrooper"
-   ```
+Import the `statetrooper` package into your Go code:
 
-   Create an instance of the FSM with the desired state enum type and initial state:
+```go
+import "github.com/hishamk/statetrooper"
+```
 
-   ```go
-   fsm := statetrooper.NewFSM[CustomStateEnum](CustomStateEnumA)
-   ```
+Create an instance of the FSM with the desired state enum type and initial state:
 
-   Add valid transitions between states:
+```go
+fsm := statetrooper.NewFSM[CustomStateEnum](CustomStateEnumA)
+```
 
-   ```go
-   fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
-   fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
-   ```
+Add valid transitions between states:
 
-   Check if a transition from the current state to the target state is valid:
+```go
+fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
+```
 
-   ```go
-   canTransition := fsm.CanTransition(targetState)
-   ```
+Check if a transition from the current state to the target state is valid:
 
-   Transition the entity from the current state to the target state with no metadata:
+```go
+canTransition := fsm.CanTransition(targetState)
+```
 
-   ```go
-   newState, err := fsm.Transition(targetState, nil)
-   if err != nil {
-       // Handle the error
-   }
-   ```
+Transition the entity from the current state to the target state with no metadata:
 
-   Transition the entity from the current state to the target state with metadata:
+```go
+newState, err := fsm.Transition(targetState, nil)
+if err != nil {
+    // Handle the error
+}
+```
 
-   ```go
+Transition the entity from the current state to the target state with metadata:
+
+```go
 	newState, err := fsm.Transition(
 		CustomStateEnumB,
 		map[string]string{
 			"requested_by":  "Mahmoud",
 			"logic_version": "1.0",
 		})
-   ```
+```
 
 ## Benchmark
-| Benchmark                | Iterations | Time per Iteration | Memory Allocation per Iteration | Allocations per Iteration |
-|--------------------------|------------|--------------------|---------------------------------|---------------------------|
-| Benchmark_transition-8   | 363,970    | 2,975 ns/op        | 2,187 B/op                      | 12 allocs/op              |
 
+| Benchmark              | Iterations | Time per Iteration | Memory Allocation per Iteration | Allocations per Iteration |
+| ---------------------- | ---------- | ------------------ | ------------------------------- | ------------------------- |
+| Benchmark_transition-8 | 363,970    | 2,975 ns/op        | 2,187 B/op                      | 12 allocs/op              |
 
 ## Example
+
 Here's an example usage with a custom entity struct and state enum:
 
 ```go
@@ -119,6 +123,7 @@ func main() {
 ```
 
 Note that states can be defined using any comparable type, such as strings, int, etc e.g.:
+
 ```go
 // CustomStateEnum represents the state enum for the custom entity
 type CustomStateEnum int
@@ -132,6 +137,10 @@ const (
 
 ```
 
-
 ## License
+
 This package is licensed under the MIT License. See the [LICENSE](LICENSE.md) file for details.
+
+## Contributing
+
+Thank you for your interest in contributing! Feel free to PR bug fixes and documentation improvements. For new features or functional alterations, please open an issue for discussion prior to submitting a PR.
