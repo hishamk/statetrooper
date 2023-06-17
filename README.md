@@ -20,6 +20,7 @@ StateTrooper is a Go package that provides a finite state machine (FSM) for mana
 - Transition error handling
 - Transition history
 - Thread safe
+- Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
 
 ## Installation
 To install StateTrooper, use the following command:
@@ -66,7 +67,7 @@ go get github.com/hishamk/statetrooper
 ## Benchmark
 | Benchmark                | Iterations | Time per Iteration | Memory Allocation per Iteration | Allocations per Iteration |
 |--------------------------|------------|--------------------|---------------------------------|---------------------------|
-| Benchmark_transition-8   | 442,840    | 3,162 ns/op        | 2,117 B/op                      | 18 allocs/op              |
+| Benchmark_transition-8   | 363,970    | 2,975 ns/op        | 2,187 B/op                      | 12 allocs/op              |
 
 
 ## Example

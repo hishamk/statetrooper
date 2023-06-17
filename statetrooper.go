@@ -34,10 +34,10 @@ import (
 
 // Transition represents information about a state transition
 type Transition[T comparable] struct {
-	FromState   T          `json:"from_state"`
-	ToState     T          `json:"to_state"`
-	Timestamp   *time.Time `json:"timestamp,omitempty"`
-	RequestedBy string     `json:"requested_by"`
+	FromState T                 `json:"from_state"`
+	ToState   T                 `json:"to_state"`
+	Timestamp *time.Time        `json:"timestamp,omitempty"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
 }
 
 // FSM represents the finite state machine for managing states
@@ -90,7 +90,7 @@ func (fsm *FSM[T]) AddRule(fromState T, toState T) {
 }
 
 // Transition transitions the entity from the current state to the target state
-func (fsm *FSM[T]) Transition(targetState T, requestedBy string) (*T, error) {
+func (fsm *FSM[T]) Transition(targetState T, metadata map[string]string) (*T, error) {
 	if !fsm.CanTransition(targetState) {
 		return nil, TransitionError[T]{
 			FromState: *fsm.CurrentState,
@@ -104,10 +104,10 @@ func (fsm *FSM[T]) Transition(targetState T, requestedBy string) (*T, error) {
 	// Track the transition
 	tn := time.Now()
 	fsm.Transitions[time.Now()] = Transition[T]{
-		FromState:   *fsm.CurrentState,
-		ToState:     targetState,
-		Timestamp:   &tn,
-		RequestedBy: requestedBy,
+		FromState: *fsm.CurrentState,
+		ToState:   targetState,
+		Timestamp: &tn,
+		Metadata:  metadata,
 	}
 
 	fsm.CurrentState = &targetState
@@ -115,6 +115,7 @@ func (fsm *FSM[T]) Transition(targetState T, requestedBy string) (*T, error) {
 	return fsm.CurrentState, nil
 }
 
+// String returns a string representation of the FSM
 func (fsm *FSM[T]) String() string {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
@@ -138,6 +139,7 @@ func (fsm *FSM[T]) String() string {
 
 }
 
+// String returns a string representation of the Transition
 func (t *Transition[T]) String() string {
-	return fmt.Sprintf("Transition from %v to %v at %v by %v", t.FromState, t.ToState, t.Timestamp, t.RequestedBy)
+	return fmt.Sprintf("Transition from %v to %v at %v by %v", t.FromState, t.ToState, t.Timestamp, t.Metadata)
 }

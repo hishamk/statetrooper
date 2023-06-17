@@ -26,6 +26,7 @@ package statetrooper
 
 import (
 	"encoding/json"
+	"reflect"
 	"sort"
 	"testing"
 	"time"
@@ -39,12 +40,14 @@ const (
 	CustomStateEnumA CustomStateEnum = "A"
 	CustomStateEnumB CustomStateEnum = "B"
 	CustomStateEnumC CustomStateEnum = "C"
+	CustomStateEnumD CustomStateEnum = "D"
 )
 
 func Test_canTransition(t *testing.T) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
+	fsm.AddRule(CustomStateEnumC, CustomStateEnumD)
 
 	tests := []struct {
 		currentState CustomStateEnum
@@ -58,6 +61,7 @@ func Test_canTransition(t *testing.T) {
 		{CustomStateEnumC, CustomStateEnumA, false},
 		{CustomStateEnumC, CustomStateEnumB, false},
 		{CustomStateEnumC, CustomStateEnumC, false},
+		{CustomStateEnumC, CustomStateEnumD, true},
 	}
 
 	for _, test := range tests {
@@ -82,20 +86,21 @@ func Test_transition(t *testing.T) {
 		{CustomStateEnumB, CustomStateEnumB, true},  // Invalid state transition (already in target state)
 		{CustomStateEnumA, CustomStateEnumB, true},  // Invalid state transition (no transition from current state to target state)
 		{CustomStateEnumC, CustomStateEnumC, false}, // Valid state transition
+		{CustomStateEnumD, CustomStateEnumC, true},  // Invalid state transition (no transition from current state to target state)
 	}
 
 	for _, test := range tests {
-		newState, err := fsm.Transition(test.targetState, "John")
+		newState, err := fsm.Transition(test.targetState, nil)
 		if (err != nil) != test.wantErr {
-			t.Errorf("Transition(%v, %v) returned error: %v, wantErr: %v", fsm.CurrentState, test.targetState, err, test.wantErr)
+			t.Errorf("Transition(%v, %v) returned error: %v, wantErr: %v", *fsm.CurrentState, test.targetState, err, test.wantErr)
 		}
 
 		if *fsm.CurrentState != test.expected {
-			t.Errorf("Transition(%v, %v) did not update the current state to %v", fsm.CurrentState, test.targetState, test.expected)
+			t.Errorf("Transition(%v, %v) did not update the current state to %v", *fsm.CurrentState, test.targetState, test.expected)
 		}
 
 		if newState != nil && *newState != test.expected {
-			t.Errorf("Transition(%v, %v) did not return the expected new state of %v", fsm.CurrentState, test.targetState, test.expected)
+			t.Errorf("Transition(%v, %v) did not return the expected new state of %v", *fsm.CurrentState, test.targetState, test.expected)
 		}
 	}
 }
@@ -105,20 +110,28 @@ func Test_transitionTracking(t *testing.T) {
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
-	requestedBy := "Ahmed"
+	metadata1 := map[string]string{
+		"requested_by":  "Mahmoud",
+		"logic_version": "1.0",
+	}
 
 	// Perform the first transition
-	_, err := fsm.Transition(CustomStateEnumB, requestedBy)
+	_, err := fsm.Transition(CustomStateEnumB, metadata1)
 	if err != nil {
-		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.CurrentState, CustomStateEnumB, err)
+		t.Errorf("Transition(%v, %v) returned an error: %v", *fsm.CurrentState, CustomStateEnumB, err)
 	}
 
 	time.Sleep(1 * time.Millisecond) // Add slight delay between transitions
 
+	metadata2 := map[string]string{
+		"requested_by":  "John",
+		"logic_version": "1.1",
+	}
+
 	// Perform the second transition
-	_, err = fsm.Transition(CustomStateEnumC, requestedBy)
+	_, err = fsm.Transition(CustomStateEnumC, metadata2)
 	if err != nil {
-		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.CurrentState, CustomStateEnumC, err)
+		t.Errorf("Transition(%v, %v) returned an error: %v", *fsm.CurrentState, CustomStateEnumC, err)
 	}
 
 	// Retrieve the transition tracker
@@ -140,22 +153,22 @@ func Test_transitionTracking(t *testing.T) {
 
 	// Check each transition in the tracker
 	expectedTransitions := []struct {
-		FromState   CustomStateEnum
-		ToState     CustomStateEnum
-		Timestamp   time.Time
-		RequestedBy string
+		FromState CustomStateEnum
+		ToState   CustomStateEnum
+		Timestamp time.Time
+		Metadata  map[string]string
 	}{
 		{
-			FromState:   CustomStateEnumA,
-			ToState:     CustomStateEnumB,
-			Timestamp:   timestamps[0],
-			RequestedBy: requestedBy,
+			FromState: CustomStateEnumA,
+			ToState:   CustomStateEnumB,
+			Timestamp: timestamps[0],
+			Metadata:  metadata1,
 		},
 		{
-			FromState:   CustomStateEnumB,
-			ToState:     CustomStateEnumC,
-			Timestamp:   timestamps[1],
-			RequestedBy: requestedBy,
+			FromState: CustomStateEnumB,
+			ToState:   CustomStateEnumC,
+			Timestamp: timestamps[1],
+			Metadata:  metadata2,
 		},
 	}
 
@@ -176,8 +189,9 @@ func Test_transitionTracking(t *testing.T) {
 			t.Errorf("Transition tracker has incorrect Timestamp. Got %v, expected within 1 second", tracker.Timestamp)
 		}
 
-		if tracker.RequestedBy != expected.RequestedBy {
-			t.Errorf("Transition tracker has incorrect RequestedBy. Got %v, expected %v", tracker.RequestedBy, expected.RequestedBy)
+		// Deep compare metadata
+		if !reflect.DeepEqual(tracker.Metadata, expected.Metadata) {
+			t.Errorf("Transition tracker has incorrect Metadata. Got %v, expected %v", tracker.Metadata, expected.Metadata)
 		}
 	}
 }
@@ -187,8 +201,18 @@ func Test_jsonMarshal(t *testing.T) {
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
-	fsm.Transition(CustomStateEnumB, "Ahmed")
-	fsm.Transition(CustomStateEnumC, "John")
+	metadata1 := map[string]string{
+		"requested_by":  "Mahmoud",
+		"logic_version": "1.0",
+	}
+
+	metadata2 := map[string]string{
+		"requested_by":  "John",
+		"logic_version": "1.1",
+	}
+
+	fsm.Transition(CustomStateEnumB, metadata1)
+	fsm.Transition(CustomStateEnumC, metadata2)
 
 	_, err := json.Marshal(fsm)
 	if err != nil {
@@ -210,8 +234,6 @@ func Benchmark_transition(b *testing.B) {
 	fsm.AddRule(CustomStateEnumC, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
-	requestedBy := "Benchmark"
-
 	tests := []struct {
 		targetState CustomStateEnum
 	}{
@@ -228,7 +250,7 @@ func Benchmark_transition(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, test := range tests {
-			entity.State, err = fsm.Transition(test.targetState, requestedBy)
+			entity.State, err = fsm.Transition(test.targetState, nil)
 			if err != nil {
 				b.Errorf("Transition returned an error: %v", err)
 			}
