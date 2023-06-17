@@ -17,8 +17,7 @@ StateTrooper is a Go package that provides a finite state machine (FSM) for mana
 
 ## Features
 - Generic support for different comparable types
-- Transition error handling
-- Transition history
+- Transition history with metadata
 - Thread safe
 - Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
 
@@ -55,13 +54,24 @@ go get github.com/hishamk/statetrooper
    canTransition := fsm.CanTransition(targetState)
    ```
 
-   Transition the entity from the current state to the target state:
+   Transition the entity from the current state to the target state with no metadata:
 
    ```go
-   newState, err := fsm.Transition(targetState)
+   newState, err := fsm.Transition(targetState, nil)
    if err != nil {
        // Handle the error
    }
+   ```
+
+   Transition the entity from the current state to the target state with metadata:
+
+   ```go
+	newState, err := fsm.Transition(
+		CustomStateEnumB,
+		map[string]string{
+			"requested_by":  "Mahmoud",
+			"logic_version": "1.0",
+		})
    ```
 
 ## Benchmark
@@ -98,7 +108,7 @@ func main() {
 	fmt.Printf("Can transition to %s: %t\n", StatusShipped, canTransition)
 
 	// Transition to a new state
-	_, err := entity.State.Transition(StatusShipped, "Mahmoud")
+	_, err := entity.State.Transition(StatusShipped, nil)
 
 	if err != nil {
 		fmt.Println("Transition error:", err)

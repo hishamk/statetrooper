@@ -118,7 +118,7 @@ func Test_transitionTracking(t *testing.T) {
 	// Perform the first transition
 	_, err := fsm.Transition(CustomStateEnumB, metadata1)
 	if err != nil {
-		t.Errorf("Transition(%v, %v) returned an error: %v", *fsm.CurrentState, CustomStateEnumB, err)
+		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.CurrentState, CustomStateEnumB, err)
 	}
 
 	time.Sleep(1 * time.Millisecond) // Add slight delay between transitions
@@ -131,7 +131,7 @@ func Test_transitionTracking(t *testing.T) {
 	// Perform the second transition
 	_, err = fsm.Transition(CustomStateEnumC, metadata2)
 	if err != nil {
-		t.Errorf("Transition(%v, %v) returned an error: %v", *fsm.CurrentState, CustomStateEnumC, err)
+		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.CurrentState, CustomStateEnumC, err)
 	}
 
 	// Retrieve the transition tracker
@@ -201,20 +201,22 @@ func Test_jsonMarshal(t *testing.T) {
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
-	metadata1 := map[string]string{
-		"requested_by":  "Mahmoud",
-		"logic_version": "1.0",
-	}
+	fsm.Transition(
+		CustomStateEnumB,
+		map[string]string{
+			"requested_by":  "Mahmoud",
+			"logic_version": "1.0",
+		})
 
-	metadata2 := map[string]string{
-		"requested_by":  "John",
-		"logic_version": "1.1",
-	}
-
-	fsm.Transition(CustomStateEnumB, metadata1)
-	fsm.Transition(CustomStateEnumC, metadata2)
+	fsm.Transition(
+		CustomStateEnumC,
+		map[string]string{
+			"requested_by":  "John",
+			"logic_version": "1.1",
+		})
 
 	_, err := json.Marshal(fsm)
+
 	if err != nil {
 		t.Errorf("JSON() returned an error: %v", err)
 	}
