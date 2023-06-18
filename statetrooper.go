@@ -27,6 +27,7 @@ SOFTWARE.
 package statetrooper
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -36,24 +37,23 @@ import (
 type Transition[T comparable] struct {
 	FromState T                 `json:"from_state"`
 	ToState   T                 `json:"to_state"`
-	Timestamp *time.Time        `json:"timestamp,omitempty"`
-	Metadata  map[string]string `json:"metadata,omitempty"`
+	Timestamp *time.Time        `json:"timestamp"`
+	Metadata  map[string]string `json:"metadata"`
 }
 
 // FSM represents the finite state machine for managing states
 type FSM[T comparable] struct {
-	CurrentState *T                          `json:"current_state"`
-	Transitions  map[time.Time]Transition[T] `json:"transitions,omitempty"`
-	ruleset      map[T][]T                   `json:"-"`
-	mu           sync.Mutex                  `json:"-"`
+	currentState T
+	transitions  []Transition[T]
+	ruleset      map[T][]T
+	mu           sync.Mutex
 }
 
 // NewFSM creates a new instance of FSM with predefined transitions
 func NewFSM[T comparable](initialState T) *FSM[T] {
 	return &FSM[T]{
-		CurrentState: &initialState,
+		currentState: initialState,
 		ruleset:      make(map[T][]T),
-		Transitions:  make(map[time.Time]Transition[T]),
 	}
 }
 
@@ -62,18 +62,18 @@ func (fsm *FSM[T]) CanTransition(targetState T) bool {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 
-	return fsm.canTransition(*fsm.CurrentState, targetState)
+	return fsm.canTransition(&fsm.currentState, &targetState)
 }
 
 // canTransition checks if a transition from one state to another state is valid
-func (fsm *FSM[T]) canTransition(fromState T, toState T) bool {
-	validTransitions, ok := fsm.ruleset[fromState]
+func (fsm *FSM[T]) canTransition(fromState *T, toState *T) bool {
+	validTransitions, ok := fsm.ruleset[*fromState]
 	if !ok {
 		return false
 	}
 
 	for _, validState := range validTransitions {
-		if validState == toState {
+		if validState == *toState {
 			return true
 		}
 	}
@@ -82,37 +82,79 @@ func (fsm *FSM[T]) canTransition(fromState T, toState T) bool {
 }
 
 // AddRule adds a valid transition between two states
-func (fsm *FSM[T]) AddRule(fromState T, toState T) {
+func (fsm *FSM[T]) AddRule(fromState T, toState ...T) {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 
-	fsm.ruleset[fromState] = append(fsm.ruleset[fromState], toState)
+	fsm.ruleset[fromState] = append(fsm.ruleset[fromState], toState...)
 }
 
 // Transition transitions the entity from the current state to the target state
-func (fsm *FSM[T]) Transition(targetState T, metadata map[string]string) (*T, error) {
+// if the transition is invalid, an error is returned and the current state is not changed
+func (fsm *FSM[T]) Transition(targetState T, metadata map[string]string) (T, error) {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 
-	if !fsm.canTransition(*fsm.CurrentState, targetState) {
-		return nil, TransitionError[T]{
-			FromState: *fsm.CurrentState,
+	if !fsm.canTransition(&fsm.currentState, &targetState) {
+		return fsm.currentState, TransitionError[T]{
+			FromState: fsm.currentState,
 			ToState:   targetState,
 		}
 	}
 
 	// Track the transition
 	tn := time.Now()
-	fsm.Transitions[time.Now()] = Transition[T]{
-		FromState: *fsm.CurrentState,
-		ToState:   targetState,
-		Timestamp: &tn,
-		Metadata:  metadata,
+	fsm.transitions = append(
+		fsm.transitions,
+		Transition[T]{
+			FromState: fsm.currentState,
+			ToState:   targetState,
+			Timestamp: &tn,
+			Metadata:  metadata,
+		})
+
+	fsm.currentState = targetState
+
+	return fsm.currentState, nil
+}
+
+// CurrentState returns the current state of the FSM
+func (fsm *FSM[T]) CurrentState() T {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	return fsm.currentState
+}
+
+// Transitions returns a map of all transitions
+func (fsm *FSM[T]) Transitions() []Transition[T] {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	// return a copy of the transitions
+	transitions := make([]Transition[T], len(fsm.transitions))
+
+	copy(transitions, fsm.transitions)
+
+	return transitions
+}
+
+// MarshalJSON serializes the FSM to JSON
+func (fsm *FSM[T]) MarshalJSON() ([]byte, error) {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	type FSMExport struct {
+		CurrentState T               `json:"current_state"`
+		Transitions  []Transition[T] `json:"transitions"`
 	}
 
-	fsm.CurrentState = &targetState
+	export := FSMExport{
+		CurrentState: fsm.currentState,
+		Transitions:  fsm.transitions,
+	}
 
-	return fsm.CurrentState, nil
+	return json.Marshal(export)
 }
 
 // String returns a string representation of the FSM
@@ -121,7 +163,7 @@ func (fsm *FSM[T]) String() string {
 	defer fsm.mu.Unlock()
 
 	// print current state
-	currentState := fmt.Sprintf("Current State: %v\n", fsm.CurrentState)
+	currentState := fmt.Sprintf("Current State: %v\n", fsm.currentState)
 
 	// print rules
 	rules := "Rules:\n"
@@ -131,7 +173,7 @@ func (fsm *FSM[T]) String() string {
 
 	// print transitions
 	transitions := "Transitions:\n"
-	for _, transition := range fsm.Transitions {
+	for _, transition := range fsm.transitions {
 		transitions += fmt.Sprintf("\t%v\n", transition)
 	}
 
@@ -141,5 +183,5 @@ func (fsm *FSM[T]) String() string {
 
 // String returns a string representation of the Transition
 func (t *Transition[T]) String() string {
-	return fmt.Sprintf("Transition from %v to %v at %v by %v", t.FromState, t.ToState, t.Timestamp, t.Metadata)
+	return fmt.Sprintf("Transition from %v to %v at %v with metadata %v", t.FromState, t.ToState, t.Timestamp, t.Metadata)
 }

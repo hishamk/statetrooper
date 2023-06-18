@@ -66,7 +66,7 @@ func Test_canTransition(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := fsm.canTransition(test.currentState, test.targetState)
+		result := fsm.canTransition(&test.currentState, &test.targetState)
 		if result != test.expected {
 			t.Errorf("canTransition(%v, %v) = %v, expected %v", test.currentState, test.targetState, result, test.expected)
 		}
@@ -93,15 +93,15 @@ func Test_transition(t *testing.T) {
 	for _, test := range tests {
 		newState, err := fsm.Transition(test.targetState, nil)
 		if (err != nil) != test.wantErr {
-			t.Errorf("Transition(%v, %v) returned error: %v, wantErr: %v", *fsm.CurrentState, test.targetState, err, test.wantErr)
+			t.Errorf("Transition(%v, %v) returned error: %v, wantErr: %v", fsm.currentState, test.targetState, err, test.wantErr)
 		}
 
-		if *fsm.CurrentState != test.expected {
-			t.Errorf("Transition(%v, %v) did not update the current state to %v", *fsm.CurrentState, test.targetState, test.expected)
+		if fsm.currentState != test.expected {
+			t.Errorf("Transition(%v, %v) did not update the current state to %v", fsm.currentState, test.targetState, test.expected)
 		}
 
-		if newState != nil && *newState != test.expected {
-			t.Errorf("Transition(%v, %v) did not return the expected new state of %v", *fsm.CurrentState, test.targetState, test.expected)
+		if newState == fsm.currentState && newState != test.expected {
+			t.Errorf("Transition(%v, %v) did not return the expected new state of %v", fsm.currentState, test.targetState, test.expected)
 		}
 	}
 }
@@ -119,7 +119,7 @@ func Test_transitionTracking(t *testing.T) {
 	// Perform the first transition
 	_, err := fsm.Transition(CustomStateEnumB, metadata1)
 	if err != nil {
-		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.CurrentState, CustomStateEnumB, err)
+		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.currentState, CustomStateEnumB, err)
 	}
 
 	time.Sleep(1 * time.Millisecond) // Add slight delay between transitions
@@ -132,21 +132,18 @@ func Test_transitionTracking(t *testing.T) {
 	// Perform the second transition
 	_, err = fsm.Transition(CustomStateEnumC, metadata2)
 	if err != nil {
-		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.CurrentState, CustomStateEnumC, err)
+		t.Errorf("Transition(%v, %v) returned an error: %v", fsm.currentState, CustomStateEnumC, err)
 	}
 
-	// Retrieve the transition tracker
-	transitionTrack := fsm.Transitions
-
 	// Verify the number of entries in the transition tracker
-	if len(transitionTrack) != 2 {
-		t.Errorf("Transition tracker does not contain the expected number of entries. Got %d, expected 2", len(transitionTrack))
+	if len(fsm.transitions) != 2 {
+		t.Errorf("Transition tracker does not contain the expected number of entries. Got %d, expected 2", len(fsm.transitions))
 	}
 
 	// Get the transition timestamps in order
 	var timestamps []time.Time
-	for timestamp := range transitionTrack {
-		timestamps = append(timestamps, timestamp)
+	for _, t := range fsm.transitions {
+		timestamps = append(timestamps, *t.Timestamp)
 	}
 	sort.Slice(timestamps, func(i, j int) bool {
 		return timestamps[i].Before(timestamps[j])
@@ -173,31 +170,30 @@ func Test_transitionTracking(t *testing.T) {
 		},
 	}
 
-	for i, timestamp := range timestamps {
-		tracker := transitionTrack[timestamp]
+	for i, tr := range fsm.transitions {
 		expected := expectedTransitions[i]
 
-		if tracker.FromState != expected.FromState {
-			t.Errorf("Transition tracker has incorrect FromState. Got %v, expected %v", tracker.FromState, expected.FromState)
+		if tr.FromState != expected.FromState {
+			t.Errorf("Transition tracker has incorrect FromState. Got %v, expected %v", tr.FromState, expected.FromState)
 		}
 
-		if tracker.ToState != expected.ToState {
-			t.Errorf("Transition tracker has incorrect ToState. Got %v, expected %v", tracker.ToState, expected.ToState)
+		if tr.ToState != expected.ToState {
+			t.Errorf("Transition tracker has incorrect ToState. Got %v, expected %v", tr.ToState, expected.ToState)
 		}
 
 		// Allow a small delta in the timestamp comparison due to slight time difference
-		if tracker.Timestamp.Sub(expected.Timestamp) > time.Second {
-			t.Errorf("Transition tracker has incorrect Timestamp. Got %v, expected within 1 second", tracker.Timestamp)
+		if tr.Timestamp.IsZero() {
+			t.Errorf("Transition tracker has zero Timestamp. Got %v.", tr.Timestamp)
 		}
 
 		// Deep compare metadata
-		if !reflect.DeepEqual(tracker.Metadata, expected.Metadata) {
-			t.Errorf("Transition tracker has incorrect Metadata. Got %v, expected %v", tracker.Metadata, expected.Metadata)
+		if !reflect.DeepEqual(tr.Metadata, expected.Metadata) {
+			t.Errorf("Transition tracker has incorrect Metadata. Got %v, expected %v", tr.Metadata, expected.Metadata)
 		}
 	}
 }
 
-func Test_concurrency(t *testing.T) {
+func Test_concurrencyRaceCondition(t *testing.T) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
@@ -248,27 +244,45 @@ func Test_jsonMarshal(t *testing.T) {
 	}
 }
 
-func Benchmark_transition(b *testing.B) {
+func Benchmark_singleTransition(b *testing.B) {
 	// CustomEntity represents a custom entity with its current state
 	type CustomEntity struct {
-		State *CustomStateEnum
+		State CustomStateEnum
 	}
 
-	entity := &CustomEntity{State: new(CustomStateEnum)}
+	entity := &CustomEntity{State: CustomStateEnumA}
 
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
-	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
-	fsm.AddRule(CustomStateEnumC, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
+
+	var err error
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		entity.State, err = fsm.Transition(CustomStateEnumB, nil)
+		if err != nil {
+			b.Errorf("Transition returned an error: %v", err)
+		}
+		fsm.currentState = CustomStateEnumA
+	}
+}
+
+func Benchmark_twoTransitions(b *testing.B) {
+	// CustomEntity represents a custom entity with its current state
+	type CustomEntity struct {
+		State CustomStateEnum
+	}
+
+	entity := &CustomEntity{State: CustomStateEnumA}
+
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
 	tests := []struct {
 		targetState CustomStateEnum
 	}{
-		{CustomStateEnumB},
-		{CustomStateEnumC},
-		{CustomStateEnumB},
-		{CustomStateEnumC},
 		{CustomStateEnumB},
 		{CustomStateEnumA},
 	}
@@ -283,5 +297,42 @@ func Benchmark_transition(b *testing.B) {
 				b.Errorf("Transition returned an error: %v", err)
 			}
 		}
+	}
+}
+
+func Benchmark_accessCurrentState(b *testing.B) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = fsm.CurrentState()
+	}
+}
+
+func Benchmark_accessTransitions(b *testing.B) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
+
+	fsm.Transition(CustomStateEnumB, nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = fsm.Transitions()
+	}
+}
+
+func Benchmark_MarshallJSON(b *testing.B) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
+
+	fsm.Transition(CustomStateEnumB, nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = json.Marshal(fsm)
 	}
 }
