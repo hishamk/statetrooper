@@ -47,12 +47,18 @@ fsm := statetrooper.NewFSM[CustomStateEnum](CustomStateEnumA)
 Add valid transitions between states. AddRule takes variadic parameters for the allowed states:
 
 ```go
-AddRule(StatusCreated, StatusPicked, StatusCanceled)    // Created -> Picked or Canceled
-AddRule(StatusPicked, StatusPacked, StatusCanceled)     // Picked -> Packed or Canceled
-AddRule(StatusPacked, StatusShipped)                    // Packed -> Shipped
-AddRule(StatusShipped, StatusDelivered)                 // Shipped -> Delivered
-AddRule(StatusCanceled, StatusReinstated)               // Canceled -> Reinstated
-AddRule(StatusReinstated, StatusPicked, StatusCanceled) // Reinstated -> Picked or Canceled
+// Created -> Picked or Canceled
+AddRule(StatusCreated, StatusPicked, StatusCanceled)
+// Picked -> Packed or Canceled
+AddRule(StatusPicked, StatusPacked, StatusCanceled)
+// Packed -> Shipped
+AddRule(StatusPacked, StatusShipped)
+// Shipped -> Delivered
+AddRule(StatusShipped, StatusDelivered)
+// Canceled -> Reinstated
+AddRule(StatusCanceled, StatusReinstated)
+// Reinstated -> Picked or Canceled
+AddRule(StatusReinstated, StatusPicked, StatusCanceled)
 ```
 
 Check if a transition from the current state to the target state is valid:
@@ -83,9 +89,13 @@ Transition the entity from the current state to the target state with metadata:
 
 ## Benchmark
 
-| Benchmark              | Iterations | Time per Iteration | Memory Allocation per Iteration | Allocations per Iteration |
-| ---------------------- | ---------- | ------------------ | ------------------------------- | ------------------------- |
-| Benchmark_transition-8 | 363,970    | 2,975 ns/op        | 2,187 B/op                      | 12 allocs/op              |
+| Benchmark                    | Operations | Time per Operation | Memory Allocated per Operation |
+| ---------------------------- | ---------- | ------------------ | ------------------------------ |
+| Benchmark_singleTransition   | 5,350,201  | 242.8 ns/op        | 304 B/op                       |
+| Benchmark_twoTransitions     | 3,306,108  | 510.1 ns/op        | 615 B/op                       |
+| Benchmark_accessCurrentState | 84,772,435 | 13.94 ns/op        | 0 B/op                         |
+| Benchmark_accessTransitions  | 41,243,962 | 28.61 ns/op        | 48 B/op                        |
+| Benchmark_MarshallJSON       | 1,000,000  | 1,113 ns/op        | 384 B/op                       |
 
 ## Example
 
@@ -115,12 +125,19 @@ func main() {
 	order := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated)}
 
 	// Define the valid state transitions for the order
-	order.State.AddRule(StatusCreated, StatusPicked, StatusCanceled)    // Created -> Picked or Canceled
-	order.State.AddRule(StatusPicked, StatusPacked, StatusCanceled)     // Picked -> Packed or Canceled
-	order.State.AddRule(StatusPacked, StatusShipped)                    // Packed -> Shipped
-	order.State.AddRule(StatusShipped, StatusDelivered)                 // Shipped -> Delivered
-	order.State.AddRule(StatusCanceled, StatusReinstated)               // Canceled -> Reinstated
-	order.State.AddRule(StatusReinstated, StatusPicked, StatusCanceled) // Reinstated -> Picked or Canceled
+
+	// Created -> Picked or Canceled
+	order.State.AddRule(StatusCreated, StatusPicked, StatusCanceled)
+	// Picked -> Packed or Canceled
+	order.State.AddRule(StatusPicked, StatusPacked, StatusCanceled)
+	// Packed -> Shipped
+	order.State.AddRule(StatusPacked, StatusShipped)
+	// Shipped -> Delivered
+	order.State.AddRule(StatusShipped, StatusDelivered)
+	// Canceled -> Reinstated
+	order.State.AddRule(StatusCanceled, StatusReinstated)
+	// Reinstated -> Picked or Canceled
+	order.State.AddRule(StatusReinstated, StatusPicked, StatusCanceled)
 
 	// Check if a transition is valid
 	canTransition := order.State.CanTransition(StatusPicked)
@@ -159,6 +176,14 @@ func main() {
 	}
 
 	// Transition to picked
+	_, err = order.State.Transition(StatusPicked, nil)
+	if err != nil {
+		fmt.Println("Transition error:", err)
+	} else {
+		fmt.Println("Transition successful. Current state:", order.State.CurrentState())
+	}
+
+	// Transition to packed
 	_, err = order.State.Transition(StatusPacked, nil)
 	if err != nil {
 		fmt.Println("Transition error:", err)
@@ -167,7 +192,13 @@ func main() {
 	}
 
 	// Transition to shipped
-	_, err = order.State.Transition(StatusShipped, nil)
+	_, err = order.State.Transition(
+		StatusShipped,
+		map[string]string{
+			"carrier":         "Aramex",
+			"tracking_number": "1234567890",
+		})
+
 	if err != nil {
 		fmt.Println("Transition error:", err)
 	} else {
@@ -181,8 +212,10 @@ func main() {
 	} else {
 		fmt.Println("Transition successful. Current state:", order.State.CurrentState())
 	}
-}
 
+	// print the current FSM data
+	fmt.Println("Current FSM data:", order.State)
+}
 ```
 
 Note that states can be defined using any comparable type, such as strings, int, etc e.g.:
@@ -198,6 +231,69 @@ const (
 	CustomStateEnumC
 )
 
+```
+
+## Serialization
+
+Current state, transition history and any metadata can be marshalled into JSON.
+
+```go
+	json, _ := order.State.MarshalJSON()
+```
+
+Output:
+
+```json
+{
+  "current_state": "delivered",
+  "transitions": [
+    {
+      "from_state": "created",
+      "to_state": "picked",
+      "timestamp": "2023-06-18T11:44:42.776422+03:00",
+      "metadata": null
+    },
+    {
+      "from_state": "picked",
+      "to_state": "canceled",
+      "timestamp": "2023-06-18T11:44:42.77643+03:00",
+      "metadata": null
+    },
+    {
+      "from_state": "canceled",
+      "to_state": "reinstated",
+      "timestamp": "2023-06-18T11:44:42.776435+03:00",
+      "metadata": null
+    },
+    {
+      "from_state": "reinstated",
+      "to_state": "picked",
+      "timestamp": "2023-06-18T11:44:42.77644+03:00",
+      "metadata": null
+    },
+    {
+      "from_state": "picked",
+      "to_state": "packed",
+      "timestamp": "2023-06-18T11:44:42.776442+03:00",
+      "metadata": null
+    },
+    {
+      "from_state": "packed",
+      "to_state": "shipped",
+      "timestamp": "2023-06-18T11:44:42.776451+03:00",
+      "metadata": {
+        "carrier": "Aramex",
+        "tracking_number": "1234567890"
+      }
+    },
+    {
+      "from_state": "shipped",
+      "to_state": "delivered",
+      "timestamp": "2023-06-18T11:44:42.776454+03:00",
+      "metadata": null
+    }
+  ]
+}
 ```
 
 ## License

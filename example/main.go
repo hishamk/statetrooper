@@ -73,6 +73,14 @@ func main() {
 	}
 
 	// Transition to picked
+	_, err = order.State.Transition(StatusPicked, nil)
+	if err != nil {
+		fmt.Println("Transition error:", err)
+	} else {
+		fmt.Println("Transition successful. Current state:", order.State.CurrentState())
+	}
+
+	// Transition to packed
 	_, err = order.State.Transition(StatusPacked, nil)
 	if err != nil {
 		fmt.Println("Transition error:", err)
@@ -102,11 +110,6 @@ func main() {
 		fmt.Println("Transition successful. Current state:", order.State.CurrentState())
 	}
 
-	// marshall to json
-	json, err := order.State.MarshalJSON()
-	if err != nil {
-		fmt.Println("Marshal error:", err)
-	} else {
-		fmt.Println("JSON:", string(json))
-	}
+	// print the current FSM data
+	fmt.Println("Current FSM data:", order.State)
 }
