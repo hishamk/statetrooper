@@ -1,19 +1,12 @@
-```
-   ______       __        ______
-  / __/ /____ _/ /____   /_  __/______  ___  ___  ___ ____
- _\ \/ __/ _ `/ __/ -_)   / / / __/ _ \/ _ \/ _ \/ -_) __/
-/___/\__/\_,_/\__/\__/   /_/ /_/  \___/\___/ .__/\__/_/
-                                          /_/
-```
-
 _Tiny, no frills finite state machine for Go_
+![](st-logo.png)
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 [![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://raw.githack.com/wiki/hishamk/statetrooper/coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
 [![MIT](https://img.shields.io/github/license/hishamk/statetrooper)](https://img.shields.io/github/license/hishamk/statetrooper) ![Code size](https://img.shields.io/github/languages/code-size/hishamk/statetrooper)
 
-StateTrooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
+State Trooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
 
 ## Features
 
@@ -24,7 +17,7 @@ StateTrooper is a Go package that provides a finite state machine (FSM) for mana
 
 ## Installation
 
-To install StateTrooper, use the following command:
+To install State Trooper, use the following command:
 
 ```shell
 go get github.com/hishamk/statetrooper
@@ -303,3 +296,7 @@ This package is licensed under the MIT License. See the [LICENSE](LICENSE.md) fi
 ## Contributing
 
 Thank you for your interest in contributing! Feel free to PR bug fixes and documentation improvements. For new features or functional alterations, please open an issue for discussion prior to submitting a PR.
+
+## Logo
+
+Synthwave title text generated courtesy of [Text Effect](https://www.textstudio.com/).
