@@ -218,7 +218,7 @@ func Test_concurrencyRaceCondition(t *testing.T) {
 	wg.Wait()
 }
 
-func Test_jsonMarshal(t *testing.T) {
+func Test_marshalJSON(t *testing.T) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
@@ -241,6 +241,56 @@ func Test_jsonMarshal(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("JSON() returned an error: %v", err)
+	}
+}
+
+func Test_unmarshalJSON(t *testing.T) {
+	// Create a sample FSM JSON data
+	jsonData := []byte(`{
+		"current_state": "stateB",
+		"transitions": [
+			{
+				"from_state": "stateA",
+				"to_state": "stateB",
+				"timestamp": "2022-01-01T12:00:00Z",
+				"metadata": {
+					"reason": "Transition from stateA to stateB"
+				}
+			}
+		]
+	}`)
+
+	// Create an FSM instance to test
+	fsm := &FSM[string]{
+		currentState: "initial",
+	}
+
+	// Unmarshal the JSON data into the FSM
+	err := json.Unmarshal(jsonData, &fsm)
+	if err != nil {
+		t.Errorf("UnmarshalJSON failed: %v", err)
+	}
+
+	// Verify the updated FSM state and transitions
+	expectedState := "stateB"
+	if fsm.currentState != expectedState {
+		t.Errorf("Unexpected currentState. Expected: %s, Got: %s", expectedState, fsm.currentState)
+	}
+
+	tp, err := time.Parse(time.RFC3339, "2022-01-01T12:00:00Z")
+
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expectedTransition := Transition[string]{
+		FromState: "stateA",
+		ToState:   "stateB",
+		Timestamp: &tp,
+		Metadata:  map[string]string{"reason": "Transition from stateA to stateB"},
+	}
+	if !reflect.DeepEqual(fsm.transitions, []Transition[string]{expectedTransition}) {
+		t.Errorf("Unexpected transitions. Expected: %v, Got: %v", []Transition[string]{expectedTransition}, fsm.transitions)
 	}
 }
 
@@ -324,7 +374,7 @@ func Benchmark_accessTransitions(b *testing.B) {
 	}
 }
 
-func Benchmark_MarshalJSON(b *testing.B) {
+func Benchmark_marshalJSON(b *testing.B) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
@@ -334,5 +384,36 @@ func Benchmark_MarshalJSON(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = json.Marshal(fsm)
+	}
+}
+
+func Benchmark_unmarshalJSON(b *testing.B) {
+	// Create a sample FSM JSON data
+	jsonData := []byte(`{
+		"current_state": "stateB",
+		"transitions": [
+			{
+				"from_state": "stateA",
+				"to_state": "stateB",
+				"timestamp": "2022-01-01T12:00:00Z",
+				"metadata": {
+					"reason": "Transition from stateA to stateB"
+				}
+			}
+		]
+	}`)
+
+	// Create an FSM instance to test
+	fsm := &FSM[string]{
+		currentState: "initial",
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// Unmarshal the JSON data into the FSM
+		err := json.Unmarshal(jsonData, &fsm)
+		if err != nil {
+			b.Errorf("UnmarshalJSON failed: %v", err)
+		}
 	}
 }

@@ -80,15 +80,16 @@ newState, err := fsm.Transition(
 	})
 ```
 
-## Benchmark
+## Benchmarks
 
 | Benchmark                    | Operations | Time per Operation | Memory Allocated per Operation |
 | ---------------------------- | ---------- | ------------------ | ------------------------------ |
-| Benchmark_singleTransition   | 5,350,201  | 242.8 ns/op        | 304 B/op                       |
-| Benchmark_twoTransitions     | 3,306,108  | 510.1 ns/op        | 615 B/op                       |
-| Benchmark_accessCurrentState | 84,772,435 | 13.94 ns/op        | 0 B/op                         |
-| Benchmark_accessTransitions  | 41,243,962 | 28.61 ns/op        | 48 B/op                        |
-| Benchmark_MarshalJSON        | 1,000,000  | 1,113 ns/op        | 384 B/op                       |
+| Benchmark_singleTransition   | 5,166,985  | 273.8 ns/op        | 314 allocs/op                  |
+| Benchmark_twoTransitions     | 2,835,214  | 513.6 ns/op        | 577 allocs/op                  |
+| Benchmark_accessCurrentState | 75,695,847 | 14.36 ns/op        | 0 allocs/op                    |
+| Benchmark_accessTransitions  | 39,356,628 | 28.74 ns/op        | 48 allocs/op                   |
+| Benchmark_marshalJSON        | 1,000,000  | 1,174 ns/op        | 384 allocs/op                  |
+| Benchmark_unmarshalJSON      | 318,949    | 3,741 ns/op        | 1,240 allocs/op                |
 
 ## Example
 

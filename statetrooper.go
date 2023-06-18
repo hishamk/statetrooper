@@ -157,21 +157,40 @@ func (fsm *FSM[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(export)
 }
 
+// UnmarshalJSON deserializes the FSM from JSON
+func (fsm *FSM[T]) UnmarshalJSON(data []byte) error {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	type FSMImport struct {
+		CurrentState T               `json:"current_state"`
+		Transitions  []Transition[T] `json:"transitions"`
+	}
+
+	var importData FSMImport
+	err := json.Unmarshal(data, &importData)
+	if err != nil {
+		return err
+	}
+
+	fsm.currentState = importData.CurrentState
+	fsm.transitions = importData.Transitions
+
+	return nil
+}
+
 // String returns a string representation of the FSM
 func (fsm *FSM[T]) String() string {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 
-	// print current state
 	currentState := fmt.Sprintf("Current State: %v\n", fsm.currentState)
 
-	// print rules
 	rules := "Rules:\n"
 	for fromState, toStates := range fsm.ruleset {
 		rules += fmt.Sprintf("\t%v -> %v\n", fromState, toStates)
 	}
 
-	// print transitions
 	transitions := "Transitions:\n"
 	for _, transition := range fsm.transitions {
 		transitions += fmt.Sprintf("\t%v\n", transition)
