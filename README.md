@@ -79,12 +79,12 @@ if err != nil {
 Transition the entity from the current state to the target state with metadata:
 
 ```go
-	newState, err := fsm.Transition(
-		CustomStateEnumB,
-		map[string]string{
-			"requested_by":  "Mahmoud",
-			"logic_version": "1.0",
-		})
+newState, err := fsm.Transition(
+	CustomStateEnumB,
+	map[string]string{
+		"requested_by":  "Mahmoud",
+		"logic_version": "1.0",
+	})
 ```
 
 ## Benchmark
