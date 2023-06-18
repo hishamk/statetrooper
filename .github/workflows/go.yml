@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          go get .
+          go get github.com/hishamk/statetrooper
 
       - name: Build
         run: go build -v ./...
