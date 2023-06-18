@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/hishamk/statetrooper"
@@ -112,4 +113,12 @@ func main() {
 
 	// print the current FSM data
 	fmt.Println("Current FSM data:", order.State)
+
+	// print the current FSM data as JSON
+	json, err := json.Marshal(order.State)
+	if err != nil {
+		fmt.Println("JSON error:", err)
+	} else {
+		fmt.Println("Current FSM data as JSON:", string(json))
+	}
 }

@@ -232,7 +232,12 @@ const (
 Current state, transition history and any metadata can be marshalled into JSON.
 
 ```go
-	json, _ := order.State.MarshalJSON()
+json, err := json.Marshal(order.State)
+if err != nil {
+	fmt.Println("JSON error:", err)
+} else {
+	fmt.Println("Current FSM data as JSON:", string(json))
+}
 ```
 
 Output:
