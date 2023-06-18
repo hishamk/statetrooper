@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ type Order struct {
 	State *statetrooper.FSM[OrderStatusEnum]
 }
 
-func main() {
+func orderScenario() {
 	// Create a new order with the initial state
 	order := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated)}
 
