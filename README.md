@@ -95,7 +95,7 @@ newState, err := fsm.Transition(
 | Benchmark_twoTransitions     | 3,306,108  | 510.1 ns/op        | 615 B/op                       |
 | Benchmark_accessCurrentState | 84,772,435 | 13.94 ns/op        | 0 B/op                         |
 | Benchmark_accessTransitions  | 41,243,962 | 28.61 ns/op        | 48 B/op                        |
-| Benchmark_MarshallJSON       | 1,000,000  | 1,113 ns/op        | 384 B/op                       |
+| Benchmark_MarshalJSON        | 1,000,000  | 1,113 ns/op        | 384 B/op                       |
 
 ## Example
 

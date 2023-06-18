@@ -126,7 +126,7 @@ func (fsm *FSM[T]) CurrentState() T {
 	return fsm.currentState
 }
 
-// Transitions returns a map of all transitions
+// Transitions returns a slice of all transitions
 func (fsm *FSM[T]) Transitions() []Transition[T] {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()

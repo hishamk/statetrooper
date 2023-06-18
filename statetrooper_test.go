@@ -324,7 +324,7 @@ func Benchmark_accessTransitions(b *testing.B) {
 	}
 }
 
-func Benchmark_MarshallJSON(b *testing.B) {
+func Benchmark_MarshalJSON(b *testing.B) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
