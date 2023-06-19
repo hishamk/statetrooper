@@ -6,13 +6,13 @@ _Tiny, no frills finite state machine for Go_
 [![Go Report Card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
 [![MIT](https://img.shields.io/github/license/hishamk/statetrooper)](https://img.shields.io/github/license/hishamk/statetrooper) ![Code size](https://img.shields.io/github/languages/code-size/hishamk/statetrooper)
 
-State Trooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
+StateTrooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
 
 ## Features
 
-- Generic support for different comparable types
-- Transition history with metadata
-- Thread safe
+- Generic support for different comparable types.
+- Transition history with metadata.
+- Thread safe.
 - Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
 - Generate [Mermaid.js](https://mermaid.js.org) diagrams for the transition rules.
 
@@ -20,7 +20,7 @@ State Trooper is a Go package that provides a finite state machine (FSM) for man
 
 ## Installation
 
-To install State Trooper, use the following command:
+To install StateTrooper, use the following command:
 
 ```shell
 go get github.com/hishamk/statetrooper
