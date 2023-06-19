@@ -14,6 +14,9 @@ State Trooper is a Go package that provides a finite state machine (FSM) for man
 - Transition history with metadata
 - Thread safe
 - Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
+- Generate [Mermaid.js](https://mermaid.js.org) diagrams for the transition rules.
+
+![Mermaid.js diagram](order-diagram.png)
 
 ## Installation
 
@@ -79,6 +82,35 @@ newState, err := fsm.Transition(
 		"logic_version": "1.0",
 	})
 ```
+
+Generate Mermaid.js diagram:
+
+```go
+diagram, _ :=order.State.GenerateMermaidDiagram()
+```
+
+_simply use the generated Mermaid code with your Mermaid visualizer to generate the diagram_
+
+```markdown
+graph LR;
+shipped;
+canceled;
+reinstated;
+created;
+picked;
+packed;
+created --> picked;
+created --> canceled;
+picked --> packed;
+picked --> canceled;
+packed --> shipped;
+shipped --> delivered;
+canceled --> reinstated;
+reinstated --> picked;
+reinstated --> canceled;
+```
+
+![Mermaid.js diagram](order-diagram.png)
 
 ## Benchmarks
 
