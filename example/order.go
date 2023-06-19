@@ -121,4 +121,7 @@ func main() {
 	} else {
 		fmt.Println("Current FSM data as JSON:", string(json))
 	}
+
+	fmt.Println("FSM rules as Mermaid diagram:")
+	fmt.Println(order.State.GenerateMermaidDiagram())
 }
