@@ -369,4 +369,4 @@ Thank you for your interest in contributing! Feel free to PR bug fixes and docum
 
 ## Logo
 
-Synthwave title text generated courtesy of [Text Effect](https://www.textstudio.com/).
+Synthwave title text generated courtesy of [Text Effect](https://www.textstudio.com/). Trooper Gropher generated via midjourney prompt: _a photorealistic rendering of the Go/Golang gopher mascot holding a sheriff's badge. Color palette similar to mascot's (baby blue or light beige). Buck teeth. Round glasses. Big smile. Transparent background. --v 5_
