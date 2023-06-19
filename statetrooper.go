@@ -140,6 +140,36 @@ func (fsm *FSM[T]) Transitions() []Transition[T] {
 	return transitions
 }
 
+// GenerateMermaidDiagram generates a Mermaid.js diagram from the FSM's rules
+func (fsm *FSM[T]) GenerateMermaidDiagram() (string, error) {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	if fsm.ruleset == nil {
+		return "", fmt.Errorf("no ruleset defined")
+	}
+
+	if len(fsm.ruleset) == 0 {
+		return "", fmt.Errorf("no rules defined")
+	}
+
+	diagram := "graph LR;\n"
+
+	// Add nodes for each state
+	for state := range fsm.ruleset {
+		diagram += fmt.Sprintf("  %v;\n", state)
+	}
+
+	// Add edges for transitions
+	for fromState, toStates := range fsm.ruleset {
+		for _, toState := range toStates {
+			diagram += fmt.Sprintf("  %v --> %v;\n", fromState, toState)
+		}
+	}
+
+	return strings.TrimSpace(diagram), nil
+}
+
 // MarshalJSON serializes the FSM to JSON
 func (fsm *FSM[T]) MarshalJSON() ([]byte, error) {
 	fsm.mu.Lock()
@@ -204,34 +234,4 @@ func (fsm *FSM[T]) String() string {
 // String returns a string representation of the Transition
 func (t *Transition[T]) String() string {
 	return fmt.Sprintf("Transition from %v to %v at %v with metadata %v", t.FromState, t.ToState, t.Timestamp, t.Metadata)
-}
-
-// GenerateMermaidDiagram generates a Mermaid.js diagram from the FSM's rules
-func (fsm *FSM[T]) GenerateMermaidDiagram() (string, error) {
-	fsm.mu.Lock()
-	defer fsm.mu.Unlock()
-
-	if fsm.ruleset == nil {
-		return "", fmt.Errorf("no ruleset defined")
-	}
-
-	if len(fsm.ruleset) == 0 {
-		return "", fmt.Errorf("no rules defined")
-	}
-
-	diagram := "graph LR;\n"
-
-	// Add nodes for each state
-	for state := range fsm.ruleset {
-		diagram += fmt.Sprintf("  %v;\n", state)
-	}
-
-	// Add edges for transitions
-	for fromState, toStates := range fsm.ruleset {
-		for _, toState := range toStates {
-			diagram += fmt.Sprintf("  %v --> %v;\n", fromState, toState)
-		}
-	}
-
-	return strings.TrimSpace(diagram), nil
 }
