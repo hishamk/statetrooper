@@ -123,5 +123,18 @@ func main() {
 	}
 
 	fmt.Println("FSM rules as Mermaid diagram:")
-	fmt.Println(order.State.GenerateMermaidDiagram())
+	m, err := order.State.GenerateMermaidRulesDiagram()
+	if err != nil {
+		fmt.Println("Mermaid diagram error:", err)
+	} else {
+		fmt.Println(m)
+	}
+
+	fmt.Println("Transition history as Mermaid diagram:")
+	m, err = order.State.GenerateMermaidTransitionHistoryDiagram()
+	if err != nil {
+		fmt.Println("Mermaid diagram error:", err)
+	} else {
+		fmt.Println(m)
+	}
 }
