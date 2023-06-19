@@ -14,9 +14,15 @@ StateTrooper is a Go package that provides a finite state machine (FSM) for mana
 - Transition history with metadata.
 - Thread safe.
 - Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
-- Generate [Mermaid.js](https://mermaid.js.org) diagrams for the transition rules.
+- Is able to generate [Mermaid.js](https://mermaid.js.org) diagram descriptions for the transition rules and transition history.
 
-![Mermaid.js diagram](order-diagram.png)
+_Rules diagram:_
+
+![Mermaid.js rules diagram](order-rules-diagram.png)
+
+_Transition history diagram:_
+
+![Mermaid.js transition history diagram](order-th-diagram.png)
 
 ## Installation
 
@@ -83,10 +89,10 @@ newState, err := fsm.Transition(
 	})
 ```
 
-Generate Mermaid.js diagram:
+Generate Mermaid.js rules diagram:
 
 ```go
-diagram, _ :=order.State.GenerateMermaidDiagram()
+diagram, _ :=order.State.GenerateMermaidRulesDiagram()
 ```
 
 _simply use the generated Mermaid code with your Mermaid visualizer to generate the diagram_
@@ -110,7 +116,33 @@ reinstated --> picked;
 reinstated --> canceled;
 ```
 
-![Mermaid.js diagram](order-diagram.png)
+![Mermaid.js diagram](order-rules-diagram.png)
+
+Generate Mermaid.js transition history diagram:
+
+```go
+diagram, _ :=order.State.GenerateMermaidTransitionHistoryDiagram()
+```
+
+```markdown
+graph TD;
+packed;
+shipped;
+delivered;
+created;
+picked;
+canceled;
+reinstated;
+created -->|1| picked;
+picked -->|2| canceled;
+canceled -->|3| reinstated;
+reinstated -->|4| picked;
+picked -->|5| packed;
+packed -->|6| shipped;
+shipped -->|7| delivered;
+```
+
+![Mermaid.js diagram](order-th-diagram.png)
 
 ## Benchmarks
 

@@ -29,7 +29,6 @@ package statetrooper
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 )
@@ -140,8 +139,8 @@ func (fsm *FSM[T]) Transitions() []Transition[T] {
 	return transitions
 }
 
-// GenerateMermaidDiagram generates a Mermaid.js diagram from the FSM's rules
-func (fsm *FSM[T]) GenerateMermaidDiagram() (string, error) {
+// GenerateMermaidRulesDiagram generates a Mermaid.js diagram from the FSM's rules
+func (fsm *FSM[T]) GenerateMermaidRulesDiagram() (string, error) {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
 
@@ -157,17 +156,58 @@ func (fsm *FSM[T]) GenerateMermaidDiagram() (string, error) {
 
 	// Add nodes for each state
 	for state := range fsm.ruleset {
-		diagram += fmt.Sprintf("  %v;\n", state)
+		diagram += fmt.Sprintf("%v;\n", state)
 	}
 
 	// Add edges for transitions
 	for fromState, toStates := range fsm.ruleset {
 		for _, toState := range toStates {
-			diagram += fmt.Sprintf("  %v --> %v;\n", fromState, toState)
+			diagram += fmt.Sprintf("%v --> %v;\n", fromState, toState)
 		}
 	}
 
-	return strings.TrimSpace(diagram), nil
+	return diagram, nil
+}
+
+// GenerateMermaidTransitionHistoryDiagram generates a Mermaid.js diagram from the FSM's transition history
+func (fsm *FSM[T]) GenerateMermaidTransitionHistoryDiagram() (string, error) {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	if fsm.transitions == nil {
+		return "", fmt.Errorf("no transition history")
+	}
+
+	if len(fsm.transitions) == 0 {
+		return "", fmt.Errorf("no transition history")
+	}
+
+	diagram := "graph TD;\n"
+
+	// Add nodes for each unique state in the transition history
+	uniqueStates := make(map[T]bool)
+	for _, transition := range fsm.transitions {
+		fromState := transition.FromState
+		toState := transition.ToState
+
+		uniqueStates[fromState] = true
+		uniqueStates[toState] = true
+	}
+
+	for state := range uniqueStates {
+		diagram += fmt.Sprintf("%v;\n", state)
+	}
+
+	// Add edges with transition order numbers
+	for i, transition := range fsm.transitions {
+		fromState := transition.FromState
+		toState := transition.ToState
+		transitionNum := i + 1
+
+		diagram += fmt.Sprintf("%v -->|%d| %v;\n", fromState, transitionNum, toState)
+	}
+
+	return diagram, nil
 }
 
 // MarshalJSON serializes the FSM to JSON
