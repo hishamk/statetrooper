@@ -2,11 +2,15 @@ _Tiny, no frills finite state machine for Go_
 ![](st-logo.png)
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
+![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/hishamk/statetrooper)
 [![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://raw.githack.com/wiki/hishamk/statetrooper/coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
 [![MIT](https://img.shields.io/github/license/hishamk/statetrooper)](https://img.shields.io/github/license/hishamk/statetrooper) ![Code size](https://img.shields.io/github/languages/code-size/hishamk/statetrooper)
 
 StateTrooper is a Go package that provides a finite state machine (FSM) for managing states. It allows you to define and enforce state transitions based on predefined rules.
+
+> ⚠️ Please keep in mind that StateTrooper is still under active development
+> and therefore full backward compatibility is not guaranteed before reaching v1.0.0.
 
 ## Features
 
@@ -369,4 +373,6 @@ Thank you for your interest in contributing! Feel free to PR bug fixes and docum
 
 ## Logo
 
-Synthwave title text generated courtesy of [Text Effect](https://www.textstudio.com/). Trooper Gropher generated via midjourney prompt: _a photorealistic rendering of the Go/Golang gopher mascot holding a sheriff's badge. Color palette similar to mascot's (baby blue or light beige). Buck teeth. Round glasses. Big smile. Transparent background. --v 5_
+Synthwave title text generated courtesy of [Text Effect](https://www.textstudio.com/).
+
+Trooper Gropher generated via midjourney prompt: _a photorealistic rendering of the Go/Golang gopher mascot holding a sheriff's badge. Color palette similar to mascot's (baby blue or light beige). Buck teeth. Round glasses. Big smile. Transparent background. --v 5_
