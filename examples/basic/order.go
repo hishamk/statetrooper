@@ -20,6 +20,10 @@ const (
 	StatusReinstated OrderStatusEnum = "reinstated"
 )
 
+func (e OrderStatusEnum) String() string {
+	return string(e)
+}
+
 // Order represents a custom entity with its current state
 type Order struct {
 	State *statetrooper.FSM[OrderStatusEnum]
@@ -27,7 +31,7 @@ type Order struct {
 
 func main() {
 	// Create a new order with the initial state
-	order := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated)}
+	order := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated, 10)}
 
 	// Define the valid state transitions for the order
 	order.State.AddRule(StatusCreated, StatusPicked, StatusCanceled)    // Created -> Picked or Canceled
@@ -115,11 +119,20 @@ func main() {
 	fmt.Println("Current FSM data:", order.State)
 
 	// print the current FSM data as JSON
-	json, err := json.Marshal(order.State)
+	j, err := json.Marshal(order.State)
 	if err != nil {
 		fmt.Println("JSON error:", err)
 	} else {
-		fmt.Println("Current FSM data as JSON:", string(json))
+		fmt.Println("Current FSM data as JSON:", string(j))
+	}
+
+	// unmarshal the FSM data from JSON
+	newOrder := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated, 10)}
+	err = json.Unmarshal(j, newOrder.State)
+	if err != nil {
+		fmt.Println("JSON error:", err)
+	} else {
+		fmt.Printf("Unmarshalled FSM data:\n%s\n", newOrder.State)
 	}
 
 	fmt.Println("FSM rules as Mermaid diagram:")

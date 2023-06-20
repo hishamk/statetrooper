@@ -15,7 +15,7 @@ StateTrooper is a Go package that provides a finite state machine (FSM) for mana
 ## Features
 
 - Generic support for different comparable types.
-- Transition history with metadata.
+- Transition history with metadata. History size configurable.
 - Thread safe.
 - Super minimal - no triggers/events or actions/callbacks. For my use case I just needed a structured, serializable way to constrain and track state transitions.
 - Is able to generate [Mermaid.js](https://mermaid.js.org) diagram descriptions for the transition rules and transition history.
@@ -44,10 +44,10 @@ Import the `statetrooper` package into your Go code:
 import "github.com/hishamk/statetrooper"
 ```
 
-Create an instance of the FSM with the desired state enum type and initial state:
+Create an instance of the FSM with the desired state enum type, initial state and maximum transition history size:
 
 ```go
-fsm := statetrooper.NewFSM[CustomStateEnum](CustomStateEnumA)
+fsm := statetrooper.NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 ```
 
 Add valid transitions between states. AddRule takes variadic parameters for the allowed states:
@@ -99,7 +99,9 @@ Generate Mermaid.js rules diagram:
 diagram, _ :=order.State.GenerateMermaidRulesDiagram()
 ```
 
-_simply use the generated Mermaid code with your Mermaid visualizer to generate the diagram_
+_In order to generate a diagram, the states type must have a String() method._ Ensure that the formatted string returned does not contain any invalid characters for Mermaid.
+
+_Use the generated Mermaid code with your Mermaid visualizer to generate the diagram._
 
 ```markdown
 graph LR;
@@ -184,7 +186,7 @@ type Order struct {
 
 func main() {
 	// Create a new order with the initial state
-	order := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated)}
+	order := &Order{State: statetrooper.NewFSM[OrderStatusEnum](StatusCreated, 10)}
 
 	// Define the valid state transitions for the order
 
@@ -293,6 +295,9 @@ const (
 	CustomStateEnumC
 )
 
+func (e CustomStateEnum) String() string {
+	return fmt.Sprintf("%d", e)
+}
 ```
 
 ## Serialization
@@ -369,10 +374,10 @@ This package is licensed under the MIT License. See the [LICENSE](LICENSE.md) fi
 
 ## Contributing
 
-Thank you for your interest in contributing! Feel free to PR bug fixes and documentation improvements. For new features or functional alterations, please open an issue for discussion prior to submitting a PR.
+Thank you for your interest in contributing! Feel free to PR bug fixes, optimisations and documentation improvements. For new features or functional alterations, please open an issue for discussion prior to submitting a PR.
 
 ## Logo
 
 Synthwave title text generated courtesy of [Text Effect](https://www.textstudio.com/).
 
-Trooper Gropher generated via midjourney prompt: _a photorealistic rendering of the Go/Golang gopher mascot holding a sheriff's badge. Color palette similar to mascot's (baby blue or light beige). Buck teeth. Round glasses. Big smile. Transparent background. --v 5_
+Trooper Gopher generated via midjourney prompt: _a photorealistic rendering of the Go/Golang gopher mascot holding a sheriff's badge. Color palette similar to mascot's (baby blue or light beige). Buck teeth. Round glasses. Big smile. Transparent background. --v 5_

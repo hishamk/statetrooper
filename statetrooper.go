@@ -47,13 +47,15 @@ type FSM[T comparable] struct {
 	transitions  []Transition[T]
 	ruleset      map[T][]T
 	mu           sync.Mutex
+	maxHistory   int
 }
 
 // NewFSM creates a new instance of FSM with predefined transitions
-func NewFSM[T comparable](initialState T) *FSM[T] {
+func NewFSM[T comparable](initialState T, maxHistory int) *FSM[T] {
 	return &FSM[T]{
 		currentState: initialState,
 		ruleset:      make(map[T][]T),
+		maxHistory:   maxHistory,
 	}
 }
 
@@ -102,7 +104,17 @@ func (fsm *FSM[T]) Transition(targetState T, metadata map[string]string) (T, err
 		}
 	}
 
+	if fsm.maxHistory == 0 {
+		fsm.currentState = targetState
+		return fsm.currentState, nil
+	}
+
 	// Track the transition
+	// Check if we need to remove the oldest transition
+	if len(fsm.transitions) >= fsm.maxHistory {
+		fsm.transitions = fsm.transitions[1:]
+	}
+
 	tn := time.Now()
 	fsm.transitions = append(
 		fsm.transitions,
@@ -140,6 +152,7 @@ func (fsm *FSM[T]) Transitions() []Transition[T] {
 }
 
 // GenerateMermaidRulesDiagram generates a Mermaid.js diagram from the FSM's rules
+// In order to generate a diagram, T must be a string or have a String() method
 func (fsm *FSM[T]) GenerateMermaidRulesDiagram() (string, error) {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
@@ -152,17 +165,22 @@ func (fsm *FSM[T]) GenerateMermaidRulesDiagram() (string, error) {
 		return "", fmt.Errorf("no rules defined")
 	}
 
+	// Check if T as represented by currentState has a String() method
+	if !stringable(fsm.currentState) {
+		return "", fmt.Errorf("type T is not a string or does not have a String() method")
+	}
+
 	diagram := "graph LR;\n"
 
 	// Add nodes for each state
 	for state := range fsm.ruleset {
-		diagram += fmt.Sprintf("%v;\n", state)
+		diagram += fmt.Sprintf("%s;\n", toString(state))
 	}
 
 	// Add edges for transitions
 	for fromState, toStates := range fsm.ruleset {
 		for _, toState := range toStates {
-			diagram += fmt.Sprintf("%v --> %v;\n", fromState, toState)
+			diagram += fmt.Sprintf("%s --> %s;\n", toString(fromState), toString(toState))
 		}
 	}
 
@@ -170,6 +188,7 @@ func (fsm *FSM[T]) GenerateMermaidRulesDiagram() (string, error) {
 }
 
 // GenerateMermaidTransitionHistoryDiagram generates a Mermaid.js diagram from the FSM's transition history
+// In order to generate a diagram, the type T must be a string or have a String() method
 func (fsm *FSM[T]) GenerateMermaidTransitionHistoryDiagram() (string, error) {
 	fsm.mu.Lock()
 	defer fsm.mu.Unlock()
@@ -180,6 +199,11 @@ func (fsm *FSM[T]) GenerateMermaidTransitionHistoryDiagram() (string, error) {
 
 	if len(fsm.transitions) == 0 {
 		return "", fmt.Errorf("no transition history")
+	}
+
+	// Check if T as represented by currentState has a String() method
+	if !stringable(fsm.currentState) {
+		return "", fmt.Errorf("type T is not a string or does not have a String() method")
 	}
 
 	diagram := "graph TD;\n"
@@ -195,7 +219,7 @@ func (fsm *FSM[T]) GenerateMermaidTransitionHistoryDiagram() (string, error) {
 	}
 
 	for state := range uniqueStates {
-		diagram += fmt.Sprintf("%v;\n", state)
+		diagram += fmt.Sprintf("%s;\n", toString(state))
 	}
 
 	// Add edges with transition order numbers
@@ -204,7 +228,7 @@ func (fsm *FSM[T]) GenerateMermaidTransitionHistoryDiagram() (string, error) {
 		toState := transition.ToState
 		transitionNum := i + 1
 
-		diagram += fmt.Sprintf("%v -->|%d| %v;\n", fromState, transitionNum, toState)
+		diagram += fmt.Sprintf("%s -->|%d| %s;\n", toString(fromState), transitionNum, toString(toState))
 	}
 
 	return diagram, nil
@@ -245,7 +269,16 @@ func (fsm *FSM[T]) UnmarshalJSON(data []byte) error {
 	}
 
 	fsm.currentState = importData.CurrentState
-	fsm.transitions = importData.Transitions
+
+	var s int
+
+	if len(importData.Transitions) < fsm.maxHistory {
+		s = len(importData.Transitions)
+	} else {
+		s = fsm.maxHistory
+	}
+
+	fsm.transitions = importData.Transitions[:s]
 
 	return nil
 }
@@ -268,7 +301,6 @@ func (fsm *FSM[T]) String() string {
 	}
 
 	return currentState + rules + transitions
-
 }
 
 // String returns a string representation of the Transition

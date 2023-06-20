@@ -45,7 +45,7 @@ const (
 )
 
 func Test_canTransition(t *testing.T) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 	fsm.AddRule(CustomStateEnumC, CustomStateEnumD)
@@ -74,7 +74,7 @@ func Test_canTransition(t *testing.T) {
 }
 
 func Test_transition(t *testing.T) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
@@ -107,7 +107,7 @@ func Test_transition(t *testing.T) {
 }
 
 func Test_transitionTracking(t *testing.T) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
@@ -194,7 +194,7 @@ func Test_transitionTracking(t *testing.T) {
 }
 
 func Test_concurrencyRaceCondition(t *testing.T) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
@@ -219,7 +219,7 @@ func Test_concurrencyRaceCondition(t *testing.T) {
 }
 
 func Test_marshalJSON(t *testing.T) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
 
@@ -263,6 +263,7 @@ func Test_unmarshalJSON(t *testing.T) {
 	// Create an FSM instance to test
 	fsm := &FSM[string]{
 		currentState: "initial",
+		maxHistory:   10,
 	}
 
 	// Unmarshal the JSON data into the FSM
@@ -302,7 +303,7 @@ func Benchmark_singleTransition(b *testing.B) {
 
 	entity := &CustomEntity{State: CustomStateEnumA}
 
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
@@ -326,7 +327,7 @@ func Benchmark_twoTransitions(b *testing.B) {
 
 	entity := &CustomEntity{State: CustomStateEnumA}
 
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
@@ -351,7 +352,7 @@ func Benchmark_twoTransitions(b *testing.B) {
 }
 
 func Benchmark_accessCurrentState(b *testing.B) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
@@ -362,7 +363,7 @@ func Benchmark_accessCurrentState(b *testing.B) {
 }
 
 func Benchmark_accessTransitions(b *testing.B) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
@@ -375,7 +376,7 @@ func Benchmark_accessTransitions(b *testing.B) {
 }
 
 func Benchmark_marshalJSON(b *testing.B) {
-	fsm := NewFSM[CustomStateEnum](CustomStateEnumA)
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
 	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
 
