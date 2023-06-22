@@ -29,6 +29,8 @@ package statetrooper
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -172,17 +174,30 @@ func (fsm *FSM[T]) GenerateMermaidRulesDiagram() (string, error) {
 
 	diagram := "graph LR;\n"
 
-	// Add nodes for each state
+	// Nodes for each state
+	var nodes []string
+
 	for state := range fsm.ruleset {
-		diagram += fmt.Sprintf("%s;\n", toString(state))
+		nodes = append(nodes, toString(state))
 	}
 
-	// Add edges for transitions
+	// Sort nodes
+	sort.Strings(nodes)
+
+	// Edges for transitions
+	var edges []string
+
 	for fromState, toStates := range fsm.ruleset {
 		for _, toState := range toStates {
-			diagram += fmt.Sprintf("%s --> %s;\n", toString(fromState), toString(toState))
+			edges = append(edges, fmt.Sprintf("%s --> %s;\n", toString(fromState), toString(toState)))
 		}
 	}
+
+	sort.Strings(edges)
+
+	diagram += strings.Join(nodes, "\n")
+	diagram += "\n"
+	diagram += strings.Join(edges, "")
 
 	return diagram, nil
 }
@@ -218,18 +233,32 @@ func (fsm *FSM[T]) GenerateMermaidTransitionHistoryDiagram() (string, error) {
 		uniqueStates[toState] = true
 	}
 
+	var nodes []string
+
 	for state := range uniqueStates {
-		diagram += fmt.Sprintf("%s;\n", toString(state))
+		nodes = append(nodes, fmt.Sprintf("%s;\n", toString(state)))
 	}
 
+	// Sort nodes
+	sort.Strings(nodes)
+
 	// Add edges with transition order numbers
+
+	var edges []string
+
 	for i, transition := range fsm.transitions {
 		fromState := transition.FromState
 		toState := transition.ToState
 		transitionNum := i + 1
 
-		diagram += fmt.Sprintf("%s -->|%d| %s;\n", toString(fromState), transitionNum, toString(toState))
+		edges = append(edges, fmt.Sprintf("%s -->|%d| %s;\n", toString(fromState), transitionNum, toString(toState)))
 	}
+
+	sort.Strings(edges)
+
+	diagram += strings.Join(nodes, "")
+	diagram += "\n"
+	diagram += strings.Join(edges, "")
 
 	return diagram, nil
 }

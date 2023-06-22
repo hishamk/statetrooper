@@ -44,6 +44,10 @@ const (
 	CustomStateEnumD CustomStateEnum = "D"
 )
 
+func (c CustomStateEnum) String() string {
+	return string(c)
+}
+
 func Test_canTransition(t *testing.T) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
@@ -216,6 +220,76 @@ func Test_concurrencyRaceCondition(t *testing.T) {
 
 	// Wait for all goroutines to finish
 	wg.Wait()
+}
+
+func Test_generateMermaidRulesDiagram(t *testing.T) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
+
+	fsm.Transition(
+		CustomStateEnumB,
+		map[string]string{
+			"requested_by":  "Mahmoud",
+			"logic_version": "1.0",
+		})
+
+	fsm.Transition(
+		CustomStateEnumC,
+		map[string]string{
+			"requested_by":  "John",
+			"logic_version": "1.1",
+		})
+
+	d, err := fsm.GenerateMermaidRulesDiagram()
+
+	// check that the diagram is as expected
+
+	if err != nil {
+		t.Errorf("GenerateMermaidRulesDiagram() returned an error: %v", err)
+	}
+
+	expectedDiagram := "graph LR;\nA\nB\nA --> B;\nB --> C;\n"
+
+	if d != expectedDiagram {
+		t.Errorf("GenerateMermaidRulesDiagram() returned an unexpected diagram:\n%s\nexpected:\n%s", d, expectedDiagram)
+
+	}
+}
+
+func Test_gnerateMermaidTransitionHistoryDiagram(t *testing.T) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumC)
+
+	fsm.Transition(
+		CustomStateEnumB,
+		map[string]string{
+			"requested_by":  "Mahmoud",
+			"logic_version": "1.0",
+		})
+
+	fsm.Transition(
+		CustomStateEnumC,
+		map[string]string{
+			"requested_by":  "John",
+			"logic_version": "1.1",
+		})
+
+	d, err := fsm.GenerateMermaidTransitionHistoryDiagram()
+
+	// check that the diagram is as expected
+
+	if err != nil {
+		t.Errorf("GenerateMermaidTransitionHistoryDiagram() returned an error: %v", err)
+	}
+
+	expectedDiagram := "graph TD;\nA;\nB;\nC;\n\nA -->|1| B;\nB -->|2| C;\n"
+
+	if d != expectedDiagram {
+		t.Errorf("GenerateMermaidTransitionHistoryDiagram() returned an unexpected diagram:\n%s\nexpected:\n%s", d, expectedDiagram)
+
+	}
 }
 
 func Test_marshalJSON(t *testing.T) {
