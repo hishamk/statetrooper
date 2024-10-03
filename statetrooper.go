@@ -153,6 +153,24 @@ func (fsm *FSM[T]) Transitions() []Transition[T] {
 	return transitions
 }
 
+// Rules returns the configured ruleset of the FSM
+func (fsm *FSM[T]) Rules() map[T][]T {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	if fsm.ruleset == nil || len(fsm.ruleset) == 0 {
+		return nil
+	}
+
+	// return a copy of the ruleset
+	ruleset := make(map[T][]T, len(fsm.ruleset))
+	for k, v := range fsm.ruleset {
+		ruleset[k] = make([]T, len(v))
+		copy(ruleset[k], v)
+	}
+	return ruleset
+}
+
 // GenerateMermaidRulesDiagram generates a Mermaid.js diagram from the FSM's rules
 // In order to generate a diagram, T must be a string or have a String() method
 func (fsm *FSM[T]) GenerateMermaidRulesDiagram() (string, error) {
