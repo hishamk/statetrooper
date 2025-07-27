@@ -222,6 +222,73 @@ func Test_concurrencyRaceCondition(t *testing.T) {
 	wg.Wait()
 }
 
+func Test_currentStateWithMetadata(t *testing.T) {
+	t.Run("No transitions", func(t *testing.T) {
+		fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+		state, metadata := fsm.CurrentStateWithMetadata()
+
+		if state != CustomStateEnumA {
+			t.Errorf("Expected state %v, got %v", CustomStateEnumA, state)
+		}
+		if metadata != nil {
+			t.Errorf("Expected nil metadata, got %v", metadata)
+		}
+	})
+
+	t.Run("Last transition matches current state with metadata", func(t *testing.T) {
+		fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+		fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+
+		expectedMetadata := map[string]string{
+			"reason": "test transition",
+			"user":   "test user",
+		}
+
+		fsm.Transition(CustomStateEnumB, expectedMetadata)
+		state, metadata := fsm.CurrentStateWithMetadata()
+
+		if state != CustomStateEnumB {
+			t.Errorf("Expected state %v, got %v", CustomStateEnumB, state)
+		}
+		if !reflect.DeepEqual(metadata, expectedMetadata) {
+			t.Errorf("Expected metadata %v, got %v", expectedMetadata, metadata)
+		}
+	})
+
+	t.Run("Last transition matches current state with nil metadata", func(t *testing.T) {
+		fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+		fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+
+		// Transition with nil metadata
+		fsm.Transition(CustomStateEnumB, nil)
+		state, metadata := fsm.CurrentStateWithMetadata()
+
+		if state != CustomStateEnumB {
+			t.Errorf("Expected state %v, got %v", CustomStateEnumB, state)
+		}
+		if metadata != nil {
+			t.Errorf("Expected nil metadata, got %v", metadata)
+		}
+	})
+
+	t.Run("Last transition matches current state with empty metadata", func(t *testing.T) {
+		fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 1)
+		fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+
+		// Transition with empty metadata
+		emptyMetadata := map[string]string{}
+		fsm.Transition(CustomStateEnumB, emptyMetadata)
+		state, metadata := fsm.CurrentStateWithMetadata()
+
+		if state != CustomStateEnumB {
+			t.Errorf("Expected state %v, got %v", CustomStateEnumB, state)
+		}
+		if metadata != nil {
+			t.Errorf("Expected nil metadata for empty metadata map, got %v", metadata)
+		}
+	})
+}
+
 func Test_generateMermaidRulesDiagram(t *testing.T) {
 	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
 	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
@@ -433,6 +500,37 @@ func Benchmark_accessCurrentState(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = fsm.CurrentState()
+	}
+}
+
+func Benchmark_accessCurrentStateWithMetadata(b *testing.B) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
+
+	metadata := map[string]string{
+		"reason": "benchmark transition",
+		"user":   "benchmark",
+	}
+
+	fsm.Transition(CustomStateEnumB, metadata)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = fsm.CurrentStateWithMetadata()
+	}
+}
+
+func Benchmark_accessCurrentStateWithEmptyMetadata(b *testing.B) {
+	fsm := NewFSM[CustomStateEnum](CustomStateEnumA, 10)
+	fsm.AddRule(CustomStateEnumA, CustomStateEnumB)
+	fsm.AddRule(CustomStateEnumB, CustomStateEnumA)
+
+	fsm.Transition(CustomStateEnumB, nil)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = fsm.CurrentStateWithMetadata()
 	}
 }
 

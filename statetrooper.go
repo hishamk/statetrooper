@@ -140,6 +140,30 @@ func (fsm *FSM[T]) CurrentState() T {
 	return fsm.currentState
 }
 
+// CurrentStateWithMetadata returns the current state of the FSM
+//
+//	along with metadata from the latest transition to this state
+func (fsm *FSM[T]) CurrentStateWithMetadata() (T, map[string]string) {
+	fsm.mu.Lock()
+	defer fsm.mu.Unlock()
+
+	if len(fsm.transitions) == 0 {
+		return fsm.currentState, nil
+	}
+
+	lastTransition := fsm.transitions[len(fsm.transitions)-1]
+	if lastTransition.ToState != fsm.currentState || lastTransition.Metadata == nil || len(lastTransition.Metadata) == 0 {
+		return fsm.currentState, nil
+	}
+
+	metadata := make(map[string]string, len(lastTransition.Metadata))
+	for k, v := range lastTransition.Metadata {
+		metadata[k] = v
+	}
+
+	return fsm.currentState, metadata
+}
+
 // Transitions returns a slice of all transitions
 func (fsm *FSM[T]) Transitions() []Transition[T] {
 	fsm.mu.Lock()

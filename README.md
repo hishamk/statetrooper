@@ -3,6 +3,7 @@ _Tiny, no frills finite state machine for Go_
 
 [![GoDoc](https://godoc.org/github.com/hishamk/statetrooper?status.png)](https://pkg.go.dev/github.com/hishamk/statetrooper?tab=doc)
 ![GitHub tag (latest SemVer pre-release)](https://img.shields.io/github/v/tag/hishamk/statetrooper)
+
 [![Go Coverage](https://github.com/hishamk/statetrooper/wiki/coverage.svg)](https://raw.githack.com/wiki/hishamk/statetrooper/coverage.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hishamk/statetrooper)](https://goreportcard.com/report/github.com/hishamk/statetrooper)
 [![MIT](https://img.shields.io/github/license/hishamk/statetrooper)](https://img.shields.io/github/license/hishamk/statetrooper) ![Code size](https://img.shields.io/github/languages/code-size/hishamk/statetrooper)
@@ -157,6 +158,8 @@ shipped -->|7| delivered;
 | Benchmark_singleTransition   | 5,166,985  | 273.8 ns/op        | 314 allocs/op                  |
 | Benchmark_twoTransitions     | 2,835,214  | 513.6 ns/op        | 577 allocs/op                  |
 | Benchmark_accessCurrentState | 75,695,847 | 14.36 ns/op        | 0 allocs/op                    |
+| Benchmark_accessCurrentStateWithMetadata | 3,881,552 | 312.2 ns/op        | 336 B/op                  |
+| Benchmark_accessCurrentStateWithEmptyMetadata | 55,361,556 | 22.37 ns/op        | 0 B/op                  |
 | Benchmark_accessTransitions  | 39,356,628 | 28.74 ns/op        | 48 allocs/op                   |
 | Benchmark_marshalJSON        | 1,000,000  | 1,174 ns/op        | 384 allocs/op                  |
 | Benchmark_unmarshalJSON      | 318,949    | 3,741 ns/op        | 1,240 allocs/op                |
@@ -296,8 +299,17 @@ const (
 )
 
 func (e CustomStateEnum) String() string {
-	return fmt.Sprintf("%d", e)
+        return fmt.Sprintf("%d", e)
 }
+```
+
+## Accessing current state metadata
+
+Use `CurrentStateWithMetadata` when you need both the entity's state and the metadata from the transition that set it. The method returns the current state and a copy of the metadata if the last transition supplied any.
+
+```go
+state, metadata := order.State.CurrentStateWithMetadata()
+fmt.Printf("Current state: %s, metadata: %v\n", state, metadata)
 ```
 
 ## Serialization
